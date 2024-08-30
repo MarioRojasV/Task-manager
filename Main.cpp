@@ -39,7 +39,7 @@ class List {
       return this->length;
     }
 
-  private:
+  protected:
     int length = 0;
 
     static void recorrer(T *currentNode) {
@@ -67,7 +67,7 @@ struct TaskType {
     this->id = id;
     this->name = name;
     this->description = description;
-    this->next = this;
+    this->next = nullptr;
   }
 };
 
@@ -140,49 +140,33 @@ struct Person {
     this->activeTasks = List<Task>();
     this->completedTasks = List<Task>();
   }
-
-  void insert(Person head, const int id, const string & name, const string & lastname, const int age) {
-    Person *currentNode = head;
-
-    while(currentNode != nullptr) {
-      if(id == currentNode->id) throw exception();
-      if(id < currentNode->id) {
-        cout << "Insertando " << name;
-        const auto newNode = new Person(id, name, lastname, age);
-        newNode->next = currentNode;
-        newNode->prev = currentNode->prev;
-        currentNode->prev = newNode;
-        break;
-      }
-      if(currentNode->next == nullptr) {
-        cout << "Insertando al final";
-        const auto newNode = new Person(id, name, lastname, age);
-        newNode->prev = currentNode;
-        currentNode->next = newNode;
-      }
-
-      currentNode = currentNode->next;
-    }
-  }
-
-  Person* get(const int index) {
-    Person* currentNode = this;
-    int counter = 0;
-
-    while(counter < index && currentNode != nullptr) {
-      cout << "Intento: " << counter << " | " << currentNode->name;
-      currentNode = currentNode->next;
-      counter++;
-    }
-
-    return currentNode;
-  }
 };
 
 class CircularList : public List<TaskType> {
   public:
     CircularList() {
       this->head = nullptr;
+    }
+
+    void insert(const string & name, const string & description) {
+      if (this->head == nullptr) {
+        this->head = new TaskType(1, name, description);
+        this->head->next = this->head;
+        return;
+      }
+
+      TaskType *currentNode = this->head;
+
+      while (true) {
+        if (currentNode->next == this->head) {
+          const auto newNode = new TaskType(currentNode->id + 1, name, description);
+          newNode->next = this->head;
+          currentNode->next = newNode;
+          this->length++;
+          break;
+        }
+        currentNode = currentNode->next;
+      }
     }
 };
 
@@ -191,14 +175,123 @@ class DoubleList: public List<Person> {
     DoubleList() {
       this->head = nullptr;
     }
+
+    void insert(const int id, const string & name, const string & lastname, const int age) {
+      if (this->head == nullptr) {
+        this->head = new Person(id, name, lastname, age);
+        this->length++;
+        return;
+      }
+
+       if(id < this->head->id) {
+         const auto newNode = new Person(id, name, lastname, age);
+         newNode->next = this->head;
+         this->head->prev = newNode;
+         this->head = newNode;
+         this->length++;
+         return;
+       }
+
+      Person *currentNode = this->head;
+
+      while(currentNode != nullptr) {
+        if(id == currentNode->id) throw exception();
+
+        if(id < currentNode->id) {
+          const auto newNode = new Person(id, name, lastname, age);
+          newNode->next = currentNode;
+          newNode->prev = currentNode->prev;
+          currentNode->prev->next = newNode;
+          currentNode->prev = newNode;
+          this->length++;
+          break;
+        }
+
+        if(currentNode->next == nullptr) {
+          const auto newNode = new Person(id, name, lastname, age);
+          newNode->prev = currentNode;
+          currentNode->next = newNode;
+          ++ this->length;
+          break;
+        }
+
+        currentNode = currentNode->next;
+      }
+    }
+
+    Person* remove(const int id) {
+      Person* currentNode = this->head;
+
+      while (currentNode != nullptr) {
+        if (currentNode->id == id) {
+          currentNode->prev->next = currentNode->next;
+          currentNode->next->prev = currentNode->prev;
+          return currentNode;
+        }
+
+        currentNode = currentNode->next;
+      }
+
+      return nullptr;
+    }
+
+    Person* get(const int index) {
+      if (index >= this->getLength()) return nullptr;
+
+      Person* currentNode = this->head;
+      for(int i = 0; i < index; i++) {
+        currentNode = currentNode->next;
+      }
+
+      return currentNode;
+    }
+
+    Person* getById(const int id) {
+      Person* currentNode = this->head;
+
+      while(currentNode != nullptr) {
+        if(currentNode->id == id) return currentNode;
+        if(currentNode->id > id) return nullptr;
+        currentNode = currentNode->next;
+      }
+
+      return  nullptr;
+    }
 };
 
+
+
+// Tests
+
+auto people = DoubleList();
+auto taskTypes = CircularList();
+
+void cargarDatos() {
+  cout << "Cargando datos" << endl;
+
+  people.insert(208620694, "Fabian", "Vargas", 19);
+  people.insert(208620696, "Juan", "Perez", 20);
+  people.insert(208620693, "Pedro", "Gonzalez", 21);
+  people.insert(208620695, "Maria", "Lopez", 22);
+
+  taskTypes.insert("Universidad", "Tareas y examenes");
+  taskTypes.insert("Hogar", "Tareas de la casa");
+}
+
 int main() {
-  auto people = Person(208620694, "Fabian", "Vargas", 19);
+  cargarDatos();
+  cout << people.get(0)->name << endl;
+  cout << people.get(1)->name << endl;
+  cout << people.get(2)->name << endl;
+  cout << people.get(3)->name << endl;
 
-  people.insert(207600357, "Mauricio", "Rojas", 47);
+  cout << people.getById(208620694)->name << endl;
+  cout << people.getById(208620696)->name << endl;
+  cout << people.getById(208620693)->name << endl;
+  cout << people.getById(208620695)->name << endl;
 
-  cout << people.get(0)->name;
+  cout << people.remove(208620695)->name << endl;
+  cout << people.getById(208620695) << endl; // Retora null
 
   return 0;
 }
