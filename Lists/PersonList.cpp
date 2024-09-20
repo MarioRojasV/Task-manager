@@ -1,13 +1,33 @@
 //
-// Created by varga on 19/9/2024.
+// Created by fabian on 19/9/2024.
 //
 
 #include "PersonList.h"
 
+/**
+ * @brief Constructor de la clase PersonList.
+ *
+ * Inicializa una lista de personas vacía con el puntero `head` apuntando a `nullptr`.
+ *
+ * @author fabian
+ */
 PersonList::PersonList() {
     this->head = nullptr;
 }
 
+/**
+ * @brief Inserta una nueva persona en la lista en orden ascendente por ID.
+ *
+ * Crea e inserta un nuevo nodo `Person` en la lista manteniendo el orden ascendente
+ * por el identificador. Si el ID ya existe, lanza una excepción.
+ *
+ * @param id Identificador único de la persona.
+ * @param name Nombre de la persona.
+ * @param lastname Apellido de la persona.
+ * @param age Edad de la persona.
+ * @throws std::exception Si el ID ya existe en la lista.
+ * @author fabian
+ */
 void PersonList::insert(const int id, const string& name, const string& lastname, const int age) {
     if (this->head == nullptr) {
         this->head = new Person(id, name, lastname, age);
@@ -51,6 +71,16 @@ void PersonList::insert(const int id, const string& name, const string& lastname
     }
 }
 
+/**
+ * @brief Elimina una persona de la lista por su ID.
+ *
+ * Busca y elimina el nodo `Person` que tiene el ID especificado.
+ * Ajusta los punteros de los nodos adyacentes en la lista.
+ *
+ * @param id Identificador único de la persona a eliminar.
+ * @return Puntero a la persona eliminada, o `nullptr` si no se encuentra.
+ * @author fabian
+ */
 Person* PersonList::remove(int id) {
     Person* currentNode = this->head;
 
@@ -68,6 +98,15 @@ Person* PersonList::remove(int id) {
     return nullptr;
 }
 
+/**
+ * @brief Obtiene una persona de la lista por su índice.
+ *
+ * Retorna el nodo `Person` en la posición especificada por el índice.
+ *
+ * @param index Índice del nodo a obtener. Debe ser menor que la longitud de la lista.
+ * @return Puntero a la persona en el índice especificado, o `nullptr` si el índice es inválido.
+ * @author fabian
+ */
 Person* PersonList::get(int index) const {
     if (index >= this->getLength()) return nullptr;
 
@@ -79,6 +118,15 @@ Person* PersonList::get(int index) const {
     return currentNode;
 }
 
+/**
+ * @brief Busca una persona en la lista por su ID.
+ *
+ * Retorna el nodo `Person` que tiene el ID especificado, o `nullptr` si no se encuentra.
+ *
+ * @param id Identificador único de la persona a buscar.
+ * @return Puntero a la persona con el ID especificado, o `nullptr` si no se encuentra.
+ * @author fabian
+ */
 Person* PersonList::getById(int id) const {
     Person* currentNode = this->head;
 

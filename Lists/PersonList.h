@@ -6,7 +6,7 @@
 #define PERSONLIST_H
 
 #include "List.h"
-#include "Structures.h"
+#include "../Structures/Person.h"
 
 class PersonList : public List<Person> {
 public:

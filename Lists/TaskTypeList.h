@@ -6,7 +6,7 @@
 #define TASKTYPELIST_H
 
 #include "List.h"
-#include "Structures.h"
+#include "../Structures/TaskType.h"
 
 class TaskTypeList : public List<TaskType> {
 public:

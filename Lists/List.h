@@ -1,3 +1,7 @@
+//
+// Created by fabian on 19/9/2024.
+//
+
 #ifndef LIST_H
 #define LIST_H
 
@@ -25,7 +29,7 @@ public:
 protected:
     int length{};
 
-    static void recorrer(T*& currentNode, int const maxCounter);
+    static void goUp(T*& currentNode, int maxCounter);
 };
 
 #include "List.cpp" // Include implementation for templates
