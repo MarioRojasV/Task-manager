@@ -14,18 +14,16 @@
  * Si el tipo de tarea es "Estudio", se inicializa la lista de subtareas.
  * La fecha y hora se convierten desde cadenas al formato `tm`.
  *
- * @param id Identificador único de la tarea.
  * @param description Descripción de la tarea.
  * @param importance Nivel de importancia de la tarea.
  * @param date Fecha de la tarea en formato "dd-mm-YYYY".
  * @param time Hora de la tarea en formato "HH:MM:SS".
  * @param type Puntero al tipo de tarea que describe la categoría de la misma.
  *
- * @throws std::runtime_error Si la fecha o la hora no tienen el formato correcto.
+ * @throws runtime_error Si la fecha o la hora no tienen el formato correcto.
  * @author fabian
  */
-Task::Task(const int id, const string & description, const string & importance, const string & date, const string & time, TaskType * type) {
-    this->id = id;
+Task::Task(const string & description, const string & importance, const string & date, const string & time, TaskType * type) {
     this->description = description;
     this->importance = importance;
     this->type = type;
@@ -64,7 +62,7 @@ void Task::setDate(const string & date) {
  * y la asigna al campo de hora de la tarea.
  *
  * @param time Hora en formato "HH:MM:SS".
- * @throws std::runtime_error Si el formato de la hora es incorrecto.
+ * @throws runtime_error Si el formato de la hora es incorrecto.
  * @author fabian
  */
 void Task::setTime(const string & time) {

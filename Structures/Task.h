@@ -9,7 +9,7 @@
 #include "TaskType.h"
 
 struct Task {
-    int id;
+    int id{};
     string description;
     string importance;
     tm date{};
@@ -18,7 +18,7 @@ struct Task {
     List<SubTask> subTasks{};
     Task* next;
 
-    Task(int id, const string & description, const string & importance, const string & date, const string & time, TaskType * type);
+    Task(const string & description, const string & importance, const string & date, const string & time, TaskType * type);
     void setDate(const string & date);
     void setTime(const string & time);
     [[nodiscard]] auto getDate() const;
