@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <windows.h>
 
 #include "Structures/Person.h"
 #include "Structures/Task.h"
@@ -9,6 +10,7 @@
 #include "Lists/List.h"
 #include "Lists/TaskTypeList.h"
 #include "Lists/PersonList.h"
+#include "utils/cursor_utils.h"
 
 using namespace std;
 
@@ -203,9 +205,79 @@ void testing() {
   cout << people.getById(208620694)->completedTasks.get(0)->subTasks.toString();
 }
 
+/**
+ * @brief Encuentra la pesona con mas tareas activas.
+ *
+ * Recorre toda la lista de personas y almacena la cantidad de tareas activas, si hay una cantidad mayor, la actualizara
+ * y guardara el indice de la persona en la lista para ser mostrado posteriormente.
+ *
+ * @author Joseph
+ */
+void showMostActiveTasksPerson(int index=0,int maxTasks=0,int selectedIndex=0){
+    if(people.get(index)==nullptr){
+        if (index==0){
+            cout << "No hay personas registradas" << endl;
+        }else{
+            cout << "Persona con mas tareas activas: " << people.get(selectedIndex)->name << endl;
+            cout << "Tareas registradas: " << people.get(selectedIndex)->activeTasks.getLength() << endl;
+        }return;
+    }else{
+        int tasks = people.get(index)->activeTasks.getLength();
+        if (tasks>maxTasks){
+            selectedIndex = index;
+            maxTasks = tasks;
+        }
+        showMostActiveTasksPerson(index+1,maxTasks,selectedIndex);
+    }
+}
+
+/**
+ * @brief Muestra la persona con mayor cantidad de tareas de un tipo especificado.
+ *
+ * .
+ *
+ * @author Joseph
+ */
+void showMostSpecificActiveTasksPerson(int opt=0){
+    if (taskTypes.getLength() == 0) {
+        cout << "No existe ningún tipo de tarea en este momento.";
+        return;
+    }
+    cout<<"Selecciona el tipo de tarea:\n(Muevete con las flechas y presiona enter para selecionar)\n";
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD posInicial = obtenerPosicionCursor(hConsole);
+    string strOpt=taskTypes.get(opt)->name;
+    cout<<"Tipo de tarea: "<<strOpt;
+    while (true){
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {return;}
+        else if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
+            moverCursorYBorrarLinea(posInicial.X, posInicial.Y, hConsole);
+            opt+=1;
+            while (GetAsyncKeyState(VK_DOWN) & 0x8000) {
+                Sleep(10); // Pausa breve
+            }
+            break;
+        }
+        else if (GetAsyncKeyState(VK_UP) & 0x8000) {
+            moverCursorYBorrarLinea(posInicial.X, posInicial.Y, hConsole);
+            opt-=1;
+            while (GetAsyncKeyState(VK_UP) & 0x8000) {
+                Sleep(10); // Pausa breve
+            }
+            break;
+        }
+    }
+    if (opt<0){opt=taskTypes.getLength();}
+    else if(opt>taskTypes.getLength()){opt=0;}
+    showMostSpecificActiveTasksPerson(opt);
+
+}
+
 int main() {
   cargarDatos();
+  showMostActiveTasksPerson();
   testing();
+  showMostSpecificActiveTasksPerson();
 
   return 0;
 }
