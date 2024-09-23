@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <limits>
 #include <sstream>
 #include <string>
 
@@ -173,15 +174,9 @@ void cargarDatos() {
     taskTypes.insert("Hogar", "Tareas de la casa");
 
     people.insert(208620694, "Fabian", "Vargas", 19);
-    people.insert(208620696, "Juan", "Perez", 20);
-    people.insert(208620693, "Pedro", "Gonzalez", 21);
-    people.insert(208620695, "Maria", "Lopez", 22);
 
     addTask(208620694, new Task("Examenes", "Medio", "01-09-2024", "12:00:00", taskTypes.get(0)));
-    addTask(208620694, new Task("Proyecto Estructuras", "Alto", "20-09-2024", "08:00:00", taskTypes.get(0)));
     addTask(208620694, new Task("Barrer", "Bajo", "20-09-2024", "08:00:00", taskTypes.get(1)));
-    addSubTask(208620694, 0, new SubTask("Calculo", "Estudiar ultimo tema", 65.3));
-    addSubTask(208620694, 1, new SubTask("Listas", "Listas de datos", 90));
 }
 
 /**
@@ -192,6 +187,17 @@ void printPeople() {
         return p.name + " " + p.lastname + ": " + to_string(p.id);
     });
     cout << "Personas con sus cedulas: " << peopleString << endl;
+}
+
+template<class T>
+bool isEmpty(T& list) {
+    if (list.getLength() <= 0) return true;
+    return false;
+}
+
+void waitKeyPress() {
+    cout << endl <<  "Presiona <ENTER> para volver..." << endl;
+    cin.get();
 }
 
 /**
@@ -217,21 +223,32 @@ void testing() {
  */
 template <typename T>
 T promptInput(const string& message, const bool allLine = false) {
-    cout << message;
-    if constexpr (is_same_v<T, string>) {
-        string input;
-        if (allLine) {
-            getline(cin, input);
-        } else {
-            cin >> input;
-            cin.ignore();
+    while (true) {
+        try {
+            cout << message;
+            if constexpr (is_same_v<T, string>) {
+                string input;
+                if (allLine) {
+                    getline(cin, input);
+                } else {
+                    cin >> input;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+                return input;
+            } else {
+                T input;
+                cin >> input;
+                if (cin.fail()) {
+                    throw runtime_error("Entrada inválida, por favor intente de nuevo.");
+                }
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                return input;
+            }
+        } catch (const runtime_error& e) {
+            cout << e.what() << endl;
+            cin.clear();  // Limpiar el estado de error de cin
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Descartar la entrada incorrecta
         }
-        return input;
-    } else {
-        T input;
-        cin >> input;
-        cin.ignore();
-        return input;
     }
 }
 
@@ -245,7 +262,7 @@ T promptInput(const string& message, const bool allLine = false) {
  */
 int selectIndex(const string& listName, const string& listContent, const int length) {
     cout << listName << ": " << listContent << endl;
-    return promptInput<int>("Escoja mediante el índice (0 - " + to_string(length) + "): ");
+    return promptInput<int>("Escoja mediante el indice (0 - " + to_string(length-1) + "): ");
 }
 
 /**
@@ -269,6 +286,12 @@ void menuInsertPerson() {
     const string name = promptInput<string>("Nombre: ", true);
     const string lastname = promptInput<string>("Apellido: ", true);
     const int age = promptInput<int>("Edad: ");
+
+    if (age < 0) {
+        cout << "Edad no puede ser negativa. Intente de nuevo." << endl;
+        return menuInsertPerson();
+    }
+
     people.insert(id, name, lastname, age);
     cout << "Persona insertada correctamente";
 }
@@ -280,6 +303,11 @@ void menuInsertPerson() {
 void menuDeletePerson() {
     cout << "================== Eliminar persona ==================" << endl;
     printPeople();
+    if (isEmpty(people)) {
+        cout << "No hay personas, inserte una antes de continuar";
+        waitKeyPress();
+        return;
+    }
     const int id = promptInput<int>("\nCedula: ");
     const Person* deletedPerson = people.removeById(id);
     cout << deletedPerson->name << " eliminado correctamente";
@@ -291,7 +319,18 @@ void menuDeletePerson() {
  */
 void menuInsertTask() {
     cout << "================== Asignar tarea a una persona ==================" << endl;
+    if (isEmpty(taskTypes)) {
+        cout << "Para crear una tarea se nececita minimo un tipo de tarea." << endl;
+        cout << "Por favor cree un tipo de tarea.";
+        waitKeyPress();
+        return;
+    }
     printPeople();
+    if (isEmpty(people)) {
+        cout << "No hay personas, inserte una antes de continuar";
+        waitKeyPress();
+        return;
+    }
     const int personId = promptInput<int>("Cedula de la persona: ");
     const string description = promptInput<string>("Descripcion de la tarea: ", true);
     const string importance = promptInput<string>("Nivel de importancia (Alto, Medio, Bajo): ");
@@ -299,7 +338,13 @@ void menuInsertTask() {
     const string time = promptInput<string>("Hora (hh:mm): ").append(":00");
     const int taskTypeIndex = selectIndex("Tipos de tarea", taskTypes.toString(), taskTypes.getLength());
 
-    addTask(personId, new Task(description, importance, date, time, taskTypes.get(taskTypeIndex)));
+    try {
+        addTask(personId, new Task(description, importance, date, time, taskTypes.get(taskTypeIndex)));
+    } catch (const runtime_error& error) {
+        cout << error.what();
+        cout << "Por favor vuelva a intentarloo..." << endl;
+        menuInsertTask();
+    }
 }
 
 /**
@@ -309,15 +354,33 @@ void menuInsertTask() {
 void menuModifyTask() {
     cout << "================== Modificar fecha y hora de una tarea ==================" << endl;
     printPeople();
+    if (isEmpty(people)) {
+        cout << "No hay personas, inserte una antes de continuar";
+        waitKeyPress();
+        return;
+    }
     const int personId = promptInput<int>("Cedula de la persona: ");
 
     const Person* person = people.getById(personId);
+
+    if (isEmpty(person->activeTasks)) {
+        cout << person->name << " no tiene tareas para modificar.";
+        waitKeyPress();
+        return;
+    }
+
     const string tasksString = person->activeTasks.toString([](const Task& node) { return node.description; });
 
     const int taskIndex = selectIndex("Tareas activas de " + person->name + ": ", tasksString, person->activeTasks.getLength());
     const string date = promptInput<string>("Nueva fecha (dd-mm-yyyy): ");
     const string time = promptInput<string>("Nueva hora (hh:mm): ").append(":00");
-    modifyActiveTask(personId, taskIndex + 1, date, time);
+    try {
+        modifyActiveTask(personId, taskIndex, date, time);
+    } catch (const runtime_error& error) {
+        cout << error.what();
+        cout << endl << "Por favor vuelva a intentarloo..." << endl;
+        menuModifyTask();
+    }
 }
 
 /**
@@ -327,15 +390,32 @@ void menuModifyTask() {
 void menuDeleteTask() {
     cout << "================== Eliminar una tarea ==================" << endl;
     printPeople();
+    if (isEmpty(people)) {
+        cout << "No hay personas, inserte una antes de continuar";
+        waitKeyPress();
+        return;
+    }
     const int personId = promptInput<int>("Cedula de la persona: ");
 
     const Person* person = people.getById(personId);
     TaskList activeTasks = person->activeTasks;
-    const string tasksString = activeTasks.toString([](const Task& node) { return node.description; });
 
+    if (isEmpty(activeTasks)) {
+        cout << person->name << " no tiene tareas";
+        waitKeyPress();
+        return;
+    }
+
+    const string tasksString = activeTasks.toString([](const Task& node) { return node.description; });
     const int taskIndex = selectIndex("Tareas activas de " + person->name + ": ", tasksString, activeTasks.getLength());
 
-    activeTasks.removeById(activeTasks.get(taskIndex)->id);
+    try {
+        activeTasks.removeById(activeTasks.get(taskIndex)->id);
+    } catch (const runtime_error& error) {
+        cout << error.what();
+        cout << endl << "Por favor vuelva a intentarlo" << endl;
+        menuDeleteTask();
+    }
 }
 
 /**
@@ -345,12 +425,23 @@ void menuDeleteTask() {
 void menuInsertSubtask() {
     cout << "================== Insertar una subtarea en una tarea ==================" << endl;
     printPeople();
+    if (isEmpty(people)) {
+        cout << "No hay personas, inserte una antes de continuar";
+        waitKeyPress();
+        return;
+    }
     const int personId = promptInput<int>("Cedula de la persona: ");
     const Person* person = people.getById(personId);
 
     const List<Task> studyTasks = person->activeTasks.filter([](const Task& task) {
         return task.type->name == "Estudio";
     });
+
+    if (isEmpty(studyTasks)) {
+        cout << person->name << " no tiene tareas activas.";
+        waitKeyPress();
+        return;
+    }
 
     const string subtasksString = studyTasks.toString([](const Task& node) {
         return node.description;
@@ -375,6 +466,11 @@ void menuInsertSubtask() {
 void menuModifySubtask() {
     cout << "================== Modificar progreso de una subtarea ==================" << endl;
     printPeople();
+    if (isEmpty(people)) {
+        cout << "No hay personas, inserte una antes de continuar";
+        waitKeyPress();
+        return;
+    }
     const int personId = promptInput<int>("Cedula de la persona: ");
     const Person* person = people.getById(personId);
 
@@ -383,6 +479,12 @@ void menuModifySubtask() {
     });
 
     const string subtasksString = tasksWithSubtasks.toString([](const Task& node) {return node.description;});
+
+    if (isEmpty(tasksWithSubtasks)) {
+        cout << person->name << " no tiene tareas con subtareas activas";
+        waitKeyPress();
+        return;
+    }
 
     const int taskIndex = selectIndex("Tareas que contienen subtareas: ", subtasksString, tasksWithSubtasks.getLength());
     const Task* selectedTask = person->activeTasks.get(taskIndex);
@@ -406,11 +508,30 @@ void menuModifySubtask() {
 void menuCompleteTask() {
     cout << "================== Marcar tarea como completa ==================" << endl;
     printPeople();
+    if (isEmpty(people)) {
+        cout << "No hay personas, inserte una antes de continuar";
+        waitKeyPress();
+        return;
+    }
     const int personId = promptInput<int>("Cedula de la persona: ");
     const Person* person = people.getById(personId);
+
+    if (isEmpty(person->activeTasks)) {
+        cout << person->name << " no tiene tareas activas";
+        waitKeyPress();
+        return;
+    }
+
     const string tasksString = person->activeTasks.toString([](const Task& node) { return node.description; });
     const int taskIndex = selectIndex("Tareas activas de " + person->name + ": ", tasksString, person->activeTasks.getLength());
-    completeTask(personId, person->activeTasks.get(taskIndex)->id);
+    try {
+        completeTask(personId, person->activeTasks.get(taskIndex)->id);
+    } catch (const runtime_error& error) {
+        cout << error.what();
+        cout << endl << "Por favor vuelva a intentarlo..." << endl;
+        menuCompleteTask();
+    }
+
 }
 
 /**
@@ -458,9 +579,11 @@ void editionMenu() {
  * @brief Función principal del programa.
  */
 int main() {
+    setlocale(LC_ALL, "");
+
     cargarDatos();
     editionMenu();
-    testing();
+    // testing();
 
   return 0;
 }

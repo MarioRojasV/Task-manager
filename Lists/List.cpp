@@ -193,6 +193,7 @@ void List<T>::goUp(T*& currentNode, int const maxCounter) {
         currentNode = currentNode->next;
         ++counter;
     }
+    if (currentNode == nullptr && counter <= maxCounter) throw runtime_error("Indice invalido");
 }
 
 /**
@@ -209,6 +210,7 @@ void List<T>::goUp(T*& currentNode, int const maxCounter) {
 template <class T>
 List<T> List<T>::filter(const std::function<bool(const T&)>& condition) const {
     auto filteredList = List<T>();
+    if (head == nullptr) return filteredList;
     T* currentNode = head;
     do {
         if (condition(*currentNode)) {
