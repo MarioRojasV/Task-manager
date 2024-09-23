@@ -2,6 +2,8 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <windows.h>
+#include <cstdlib>
 
 #include "Structures/Person.h"
 #include "Structures/Task.h"
@@ -9,11 +11,13 @@
 #include "Lists/List.h"
 #include "Lists/TaskTypeList.h"
 #include "Lists/PersonList.h"
+#include "utils/utils.h"
 
 using namespace std;
 
 auto people = PersonList();
 auto taskTypes = TaskTypeList();
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 /**
  * @brief Agrega una tarea activa a una persona.
@@ -157,6 +161,7 @@ void cargarDatos() {
 
   taskTypes.insert("Estudio", "Tareas y examenes");
   taskTypes.insert("Hogar", "Tareas de la casa");
+  taskTypes.insert("Trabajo", "Tareas laborales");
 
   people.insert(208620694, "Fabian", "Vargas", 19);
   people.insert(208620696, "Juan", "Perez", 20);
@@ -165,6 +170,8 @@ void cargarDatos() {
 
   addTask(208620694, new Task(1, "Examenes", "Medio", "01-09-2024", "12:00:00", taskTypes.get(0)));
   addTask(208620694, new Task(2, "Proyecto Estructuras", "Alto", "20-09-2024", "08:00:00", taskTypes.get(0)));
+  addTask(208620696, new Task(3, "Tareas de la casa", "Bajo", "10-09-2024", "18:00:00", taskTypes.get(1)));
+  addTask(208620693, new Task(3, "Tareas de la casa", "Bajo", "10-09-2024", "18:00:00", taskTypes.get(1)));
   addSubTask(208620694, 0, new SubTask("Calculo", "Estudiar ultimo tema", 65.3));
   addSubTask(208620694, 1, new SubTask("Listas", "Listas de datos", 90));
 }
@@ -203,9 +210,186 @@ void testing() {
   cout << people.getById(208620694)->completedTasks.get(0)->subTasks.toString();
 }
 
+/**
+ * @brief Encuentra la pesona con mas tareas activas.
+ * 1. ¿Cuál es la persona que tiene más tareas activas?
+ * Recorre toda la lista de personas y almacena la cantidad de tareas activas, si hay una cantidad mayor, la actualizara
+ * y guardara el indice de la persona en la lista para ser mostrado posteriormente.
+ *
+ * @author Joseph
+ */
+void showMostActiveTasksPerson(int index=0,int maxTasks=0,int selectedIndex=0){
+    if(people.get(index)==nullptr){
+        if (index==0){
+            cout << "No hay personas registradas" << endl;
+        }else{
+            cout << "Persona con mas tareas activas: " << people.get(selectedIndex)->name << endl;
+            cout << "Tareas registradas: " << people.get(selectedIndex)->activeTasks.getLength() << endl;
+        }return;
+    }else{
+        int tasks = people.get(index)->activeTasks.getLength();
+        if (tasks>maxTasks){
+            selectedIndex = index;
+            maxTasks = tasks;
+        }
+        showMostActiveTasksPerson(index+1,maxTasks,selectedIndex);
+    }
+}
+
+/**
+ * @brief Muestra la persona con mayor cantidad de tareas de un tipo especificado.
+ * 2. ¿Cuál es la persona que tiene más tareas activas de un tipo X?
+ * .
+ *
+ * @author Joseph
+ */
+string selectTask(int opt = 0) {
+    if (taskTypes.getLength() == 0) {
+        return "empty";
+    }
+    string strOpt;
+    cout << "Selecciona el tipo de tarea:\n(Muevete con las flechas (up & down); presiona ESPACIO para seleccionar)\n";
+    COORD posText = getCursorPosition(hConsole);
+
+    bool selection = false;
+    while (!selection) {
+        // Actualizar y mostrar la opción actual
+        strOpt = taskTypes.get(opt)->name;
+        moveCursor(15, posText.Y, hConsole);
+        deleteLine(hConsole);
+        moveCursor(posText.X, posText.Y, hConsole);
+        cout << "Tipo de tarea: " << strOpt <<endl;
+
+        // Verificar entradas de teclado
+        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000) {
+            return "empty";
+        } else if (GetAsyncKeyState(VK_DOWN) & 0x8000) {
+            opt++;
+            while (GetAsyncKeyState(VK_DOWN) & 0x8000) { Sleep(50); }
+        } else if (GetAsyncKeyState(VK_UP) & 0x8000) {
+            opt--;
+            while (GetAsyncKeyState(VK_UP) & 0x8000) { Sleep(50); }
+        } else if (GetAsyncKeyState(VK_SPACE) & 0x8000) {
+            while (GetAsyncKeyState(VK_SPACE) & 0x8000) { Sleep(50); }
+            FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+            selection = true;
+            break;
+        }
+        if (opt < 0) { opt = taskTypes.getLength(); }
+        else if (opt > taskTypes.getLength()) { opt = 0; }
+
+        Sleep(10); 
+    }
+    return strOpt;
+}
+
+
+void showMostSpecificActiveTasksPerson(){
+  string respuesta=selectTask();
+  if (respuesta!="empty"){
+    int index=0;
+    int maxTasks=0;
+    int selectedIndex=0;
+    while(people.get(index)!=nullptr){
+      int tasks = 0;
+      for (int i = 0; i < people.get(index)->activeTasks.getLength(); i++) {
+        if (people.get(index)->activeTasks.get(i)->type->name == respuesta) {
+          tasks++;
+        }
+      }
+      if (tasks > maxTasks) {
+        selectedIndex = index;
+        maxTasks = tasks;
+      }
+      index++;
+    }
+    if (maxTasks > 0) {
+      cout << "Persona con mas tareas activas de tipo " << respuesta << ": " << people.get(selectedIndex)->name << endl;
+      cout << "Tareas registradas: " << maxTasks << endl;
+    }
+    else {
+      cout << "No hay tareas activas de tipo " << respuesta << endl;
+    }
+  }
+  else{
+    cout << "No existe ningun tipo de tarea en este momento.";
+  }
+}
+
+void queryMenu(){
+  COORD pos = getCursorPosition(hConsole);
+  int option=0;
+  while (true) {
+    system("cls");
+    cout << "Consultas\n";
+    cout << "1. Cual es la persona que tiene mas tareas activas?\n";
+    cout << "2. Cual es la persona que tiene mas tareas activas de un tipo X?\n";
+    cout << "3. Que tipo de tarea es el mas comun? En caso de empate indicarlo.\n";
+    cout << "4. Cual es la persona que tiene mas tareas vencidas de un tipo X dado una fecha Y?\n";
+    cout << "5. Cual es el tipo de tareas mas comun que se vence sin completarse, dado una fecha Y?\n";
+    cout << "6. Cual es el tipo de importancia mas usado por las personas?\n";
+    cout << "7. Que es el tipo de tarea mas comun en tareas activas de importancia media?\n";
+    cout << "8. Que es el tipo de tarea mas comun en tareas realizadas de importancia Alta?\n";
+    cout << "9. Salir\n";
+    cout << "Seleccione una opcion: ";
+    cin >> option;
+    switch (option) {
+      case 1:
+        showMostActiveTasksPerson();
+        cout << "Presione enter para continuar...";
+        waitEnter();
+        break;
+      case 2:
+        showMostSpecificActiveTasksPerson();
+        cout << "Presione enter para continuar...";
+        waitEnter();
+        break;
+      case 9:
+        return;
+      default:
+        verifyInputType();
+        moveCursorAndDeleteLine(23, pos.Y, hConsole);
+        moveCursor(pos.X, pos.Y, hConsole);
+        break;
+    }
+  }
+}
+
+void menu() {
+  int option=0;
+  while(true){
+    system("cls");
+    cout << "Menu" << endl;
+    cout << "1. Actualizacion de informacion" << endl;
+    cout << "2. Consultas" << endl;
+    cout << "3. Informes" << endl;
+    cout << "4. Salir" << endl;
+    cout << "Seleccione una opcion: ";
+    COORD pos = getCursorPosition(hConsole);
+    cin >> option;
+    switch (option) {
+      case 2:
+        system("cls");
+        queryMenu();
+        break;
+      case 4:
+        return;
+      default:
+        verifyInputType();
+        moveCursorAndDeleteLine(23, pos.Y, hConsole);
+        moveCursor(pos.X, pos.Y, hConsole);
+        break;
+    }
+  }
+}
+
 int main() {
   cargarDatos();
-  testing();
+  //showMostSpecificActiveTasksPerson();
+  menu();	
+  // testing();
+
+
 
   return 0;
 }
