@@ -5,6 +5,7 @@
 #include <string>
 #include <windows.h>
 #include <cstdlib>
+#include <conio.h>
 
 #include "Structures/Person.h"
 #include "Structures/Task.h"
@@ -174,20 +175,35 @@ void subTaskProgress(const int personId, const int taskId, const int subTaskInde
 void cargarDatos() {
     cout << "Datos Cargados" << endl;
 
-  taskTypes.insert("Estudio", "Tareas y examenes");
-  taskTypes.insert("Hogar", "Tareas de la casa");
-  taskTypes.insert("Trabajo", "Tareas laborales");
+    // Insertar tipos de tareas
+    taskTypes.insert("Estudio", "Tareas y exámenes");
+    taskTypes.insert("Hogar", "Tareas de la casa");
+    taskTypes.insert("Trabajo", "Tareas laborales");
+    taskTypes.insert("Ejercicio", "Actividades físicas");
+    taskTypes.insert("Ocio", "Tiempo libre");
 
+    // Insertar personas
     people.insert(208620694, "Fabian", "Vargas", 19);
+    people.insert(208620695, "Ana", "Martinez", 22);
+    people.insert(208620696, "Carlos", "Lopez", 30);
+    people.insert(208620697, "Laura", "Jimenez", 25);
+    people.insert(208620698, "Jose", "Gonzalez", 28);
 
+    // Insertar tareas
     addTask(208620694, new Task("Examenes", "Medio", "01-09-2024", "12:00:00", taskTypes.get(0)));
     addTask(208620694, new Task("Barrer", "Bajo", "20-09-2024", "08:00:00", taskTypes.get(1)));
-  addTask(208620694, new Task(1, "Examenes", "Medio", "01-09-2024", "12:00:00", taskTypes.get(0)));
-  addTask(208620694, new Task(2, "Proyecto Estructuras", "Alto", "20-09-2024", "08:00:00", taskTypes.get(0)));
-  addTask(208620696, new Task(3, "Tareas de la casa", "Bajo", "10-09-2024", "18:00:00", taskTypes.get(1)));
-  addTask(208620693, new Task(3, "Tareas de la casa", "Bajo", "10-09-2024", "18:00:00", taskTypes.get(1)));
-  addSubTask(208620694, 0, new SubTask("Calculo", "Estudiar ultimo tema", 65.3));
-  addSubTask(208620694, 1, new SubTask("Listas", "Listas de datos", 90));
+    addTask(208620695, new Task("Proyecto", "Alto", "15-09-2024", "14:00:00", taskTypes.get(0)));
+    addTask(208620696, new Task("Trabajo", "Alto", "22-09-2024", "09:00:00", taskTypes.get(2)));
+    addTask(208620697, new Task("Ejercicio", "Medio", "18-09-2024", "06:00:00", taskTypes.get(3)));
+
+    // Insertar subtareas
+    addSubTask(208620694, 0, new SubTask("Calculo", "Estudiar último tema", 65.3));
+    addSubTask(208620694, 0, new SubTask("Física", "Revisar apuntes", 40.0));
+    addSubTask(208620694, 0, new SubTask("Matemáticas", "Resolver ejercicios", 70.0));
+    addSubTask(208620694, 1, new SubTask("Limpieza", "Cocina", 50.0));
+    addSubTask(208620695, 0, new SubTask("Investigación", "Recopilar datos", 80.0));
+    addSubTask(208620696, 0, new SubTask("Informe", "Redactar conclusiones", 90.0));
+    addSubTask(208620697, 0, new SubTask("Planificación", "Definir horarios", 75.0));
 }
 
 /**
@@ -585,7 +601,7 @@ void editionMenu() {
         }
     }
 }
-
+/**
  * @brief Encuentra la pesona con mas tareas activas.
  * 1. ¿Cuál es la persona que tiene más tareas activas?
  * Recorre toda la lista de personas y almacena la cantidad de tareas activas, si hay una cantidad mayor, la actualizara
@@ -692,6 +708,7 @@ void showMostSpecificActiveTasksPerson(){
 }
 
 void queryMenu(){
+    system("cls");
   COORD pos = getCursorPosition(hConsole);
   int option=0;
   while (true) {
@@ -730,6 +747,333 @@ void queryMenu(){
   }
 }
 
+/**
+ * @brief Ordenamiento de tareas activas de un usuario por fecha.
+ *
+ * Realiza un ordenamiento burbuja de las tareas activas de un usuario en base a la fecha.
+ *
+ * @author mario
+ */
+TaskList ordenarPorFecha (TaskList lPTareasActivas) {
+    if (lPTareasActivas.head->next == nullptr) {
+        return lPTareasActivas; // Si la lista está vacía o solo tiene un elemento
+    }
+    bool cambios = true;
+
+    while (cambios) {
+        Task* tempTareaActiva = lPTareasActivas.head;
+        cambios = false;
+        Task* anteriorTarea = nullptr;
+        while (tempTareaActiva->next != nullptr) {
+            Task* siguiente = tempTareaActiva->next;
+            if ((tempTareaActiva->date.tm_year > tempTareaActiva->next->date.tm_year) ||
+                (tempTareaActiva->date.tm_year == tempTareaActiva->next->date.tm_year &&
+                    tempTareaActiva->date.tm_yday > tempTareaActiva->next->date.tm_yday)) {
+               if (anteriorTarea == nullptr)
+                   lPTareasActivas.head = siguiente;
+               else {
+                   anteriorTarea->next = siguiente;
+               }
+                tempTareaActiva->next = siguiente->next;
+                siguiente->next = tempTareaActiva;
+
+                cambios = true;
+
+                anteriorTarea = siguiente;
+            }
+            else {
+                // Si no hay cambios avanza con los siguientes dos elementos
+                anteriorTarea = tempTareaActiva;
+                tempTareaActiva = tempTareaActiva->next;
+            }
+        }
+    }
+    return lPTareasActivas;
+}
+
+/**
+ * @brief Menu de reportes.
+ *
+ * Muestra el menu de opciones de reportes, además de ejecutar las funciones respectivas a cada opción.
+ *
+ * @author mario
+ */
+void menuReportes() {
+    system("cls");
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); // Se usa para modificar el color de la consola
+    string opcionReporte = "0";
+
+    while (opcionReporte != "9") {
+        SetConsoleTextAttribute(hConsole, 160); // Se modifica el color de la consola
+        cout << "\nMenu de reportes:";
+        SetConsoleTextAttribute(hConsole, 10);
+        cout << "\n1. Mostrar los tipos de tareas.\n";
+        cout << "2. Mostrar todos los usuarios.\n";
+        cout << "3. Mostrar usuarios sin tareas activas.\n";
+        cout << "4. Mostrar tareas activas de un usuario en especifico (filtradas por fecha).\n";
+        cout << "5. Mostrar tareas proximas a vencer (menos de una semana) de una fecha en especifico.\n";
+        cout << "6. Mostrar subtareas de una tarea y usuario en especificos.\n";
+        cout << "7. Mostrar tareas realizadas por un usuario en especifico.\n";
+        cout << "8. Mostrar tareas realizadas al 100%.\n";
+        cout << "9. Volver al menu principal.\n";
+        SetConsoleTextAttribute(hConsole, 7);
+        cout << "Seleccione una opcion [1-9]:";
+        cin >> opcionReporte;
+
+        if (opcionReporte == "1") {
+            TaskType* actual = taskTypes.head;
+            do {
+                cout << actual->name << endl;
+                actual = actual->next;
+            } while (actual != taskTypes.head);
+            cout << "Presiones enter para continuar...\n";
+            _getch();
+        }
+        else if (opcionReporte == "2") {
+            Person* actual = people.head;
+            do {
+                cout << actual->name << endl;
+                actual = actual->next;
+            } while (actual != nullptr);
+            cout << "Presiones enter para continuar...\n";
+            _getch();
+        }
+        else if (opcionReporte == "3") {
+            Person* actual = people.head;
+            do {
+                if (actual->activeTasks.head == nullptr)
+                    cout << actual->name << endl;
+                actual = actual->next;
+            } while (actual != nullptr);
+            cout << "Presiones enter para continuar...\n";
+            _getch();
+        }
+        else if (opcionReporte == "4") {
+            Person* actual = people.head;
+            string nombreABuscar;
+            cout << "Ingrese el nombre a buscar:";
+            cin >> nombreABuscar;
+            while (actual->name != nombreABuscar) {
+                actual = actual->next;
+                if (actual == nullptr)
+                    break;
+            }
+            if (actual == nullptr) {
+                cout << "El usuario ingresado no existe! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            else if (actual->activeTasks.head == nullptr) {
+                cout << "El usuario ingresado no tiene tareas pendientes! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            actual->activeTasks = ordenarPorFecha(actual->activeTasks);
+            cout << "Tareas pendientes de " << actual->name << ":\n\n";
+            Task* tareaActual = actual->activeTasks.head;
+            int contadorTareas = 1;
+            do {
+                cout << "Tarea #" << contadorTareas << endl;
+                cout << "Tipo: " << tareaActual->type->name << endl;
+                cout << "ID: " << tareaActual->id << endl;
+                cout << "Importancia: " << tareaActual->importance << endl;
+                cout << "Fecha: " << tareaActual->getDate() << endl;
+                cout << "Hora: " << tareaActual->getTime() << endl;
+                cout << "Descripcion: " << tareaActual->description << endl << endl;
+                tareaActual = tareaActual->next;
+
+                contadorTareas++;
+            } while (tareaActual != nullptr);
+            cout << "Presiones enter para continuar...\n";
+            _getch();
+
+        }
+        else if (opcionReporte == "5") {
+            Person* actual = people.head;
+            int contadorTareas = 1;
+            string yearTemp;
+            string mesTemp;
+            string diaTemp;
+
+            cout << "\n*FILTRO FECHA*";
+            cout << "\nIngrese un a" << static_cast<char>(164) << "o:";
+            cin >> yearTemp;
+            cout << "Ingrese un mes:";
+            cin >> mesTemp;
+            cout << "Ingrese un dia:";
+            cin >> diaTemp;
+            cout << endl;
+
+            string strFechaTemp = diaTemp + "-" + mesTemp + "-" + yearTemp;
+            tm contenedorFecha = {};
+            istringstream fechaTemp(strFechaTemp);
+            fechaTemp >> get_time(&contenedorFecha, "%d-%m-%Y");
+            if (fechaTemp.fail()) {
+                throw runtime_error("Formato de fecha incorrecto. (dd-mm-YYYY)");
+                continue;
+            }
+
+            while (actual != nullptr) {
+                Task* tareaActual = actual->activeTasks.head;
+                while (tareaActual != nullptr) {
+                    int restaDias = tareaActual->date.tm_yday - contenedorFecha.tm_yday;
+                    if ((tareaActual->date.tm_year == contenedorFecha.tm_year && (restaDias < 8 && restaDias >= 0)) ||
+                        (tareaActual->date.tm_year == contenedorFecha.tm_year + 1 && restaDias < -358)) {
+
+                        cout << "Tarea #" << contadorTareas << endl;
+                        cout << "Usuario: " << actual->name << endl;
+                        cout << "Tipo: " << tareaActual->type->name << endl;
+                        cout << "ID: " << tareaActual->id << endl;
+                        cout << "Importancia: " << tareaActual->importance << endl;
+                        cout << "Fecha: " << tareaActual->getDate() << endl;
+                        cout << "Hora: " << tareaActual->getTime() << endl;
+                        cout << "Descripcion: " << tareaActual->description << endl << endl;
+                        if (actual->completedTasks.getLength() == 1)
+                            break;
+                        contadorTareas++;
+
+                    }
+
+                    tareaActual = tareaActual->next;
+
+                }
+                actual = actual->next;
+            }
+        }
+        else if (opcionReporte == "6") {
+            Person* actual = people.head;
+            string nombreABuscar;
+            cout << "Ingrese el nombre a buscar:";
+            cin >> nombreABuscar;
+            while (actual->name != nombreABuscar) {
+                actual = actual->next;
+                if (actual == nullptr)
+                    break;
+            }
+            if (actual == nullptr) {
+                cout << "El usuario ingresado no existe! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            else if (actual->activeTasks.head == nullptr || actual->completedTasks.head == nullptr) {
+                cout << "El usuario ingresado no tiene tareas! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            int tareaABuscar;
+            bool noTareasActivas = false;
+            cout << "Ingrese el ID de la tarea a buscar:";
+            cin >> tareaABuscar;
+            Task* tareaActual = actual->activeTasks.head;
+            while (tareaActual->id != tareaABuscar) {
+                actual = actual->next;
+                if (actual == nullptr)
+                    noTareasActivas = true;
+                    break;
+            }
+            if (noTareasActivas) {
+                Task* tareaActual = actual->completedTasks.head;
+                while (tareaActual->id != tareaABuscar) {
+                    actual = actual->next;
+                    if (actual == nullptr)
+                        break;
+                }
+            }
+            if (noTareasActivas) {
+                cout << "La tarea buscada no esta dentro de las tareas del usuario! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            SubTask* subTareaActual = tareaActual->subTasks.head;
+            if (subTareaActual == nullptr) {
+                cout << "La tarea buscada no tiene subtareas! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            int contaSubTareas = 1;
+            while (subTareaActual != nullptr) {
+                cout << "\nSubTarea #" << contaSubTareas << endl;
+                cout << "Nombre: " << subTareaActual->name << endl;
+                cout << "Comentarios: " << subTareaActual->comments << endl;
+                cout << "Progreso: " << subTareaActual->progress << "%" << endl << endl;
+                subTareaActual = subTareaActual->next;
+                contaSubTareas++;
+            }
+            cout << "Presiones enter para continuar...\n";
+            _getch();
+        }
+        else if (opcionReporte == "7") {
+            Person* actual = people.head;
+            string nombreABuscar;
+            cout << "Ingrese el nombre a buscar:";
+            cin >> nombreABuscar;
+            while (actual->name != nombreABuscar) {
+                actual = actual->next;
+                if (actual == nullptr)
+                    break;
+            }
+            if (actual == nullptr) {
+                cout << "El usuario ingresado no existe! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            else if (actual->completedTasks.head == nullptr) {
+                cout << "El usuario ingresado no tiene tareas completadas! Presiones enter para continuar...\n";
+                _getch();
+                continue;
+            }
+            cout << "Tareas completadas de " << actual->name << ":\n\n";
+            Task* tareaActual = actual->completedTasks.head;
+            int contadorTareas = 1;
+            do {
+                cout << "Tarea #" << contadorTareas << endl;
+                cout << "Tipo: " << tareaActual->type->name << endl;
+                cout << "ID: " << tareaActual->id << endl;
+                cout << "Importancia: " << tareaActual->importance << endl;
+                cout << "Fecha: " << tareaActual->getDate() << endl;
+                cout << "Hora: " << tareaActual->getTime() << endl;
+                cout << "Descripcion: " << tareaActual->description << endl << endl;
+                if (actual->completedTasks.getLength() == 1)
+                    break;
+                tareaActual = tareaActual->next;
+                contadorTareas++;
+            } while (tareaActual != nullptr);
+            cout << "Presiones enter para continuar...\n";
+            _getch();
+        }
+        else if (opcionReporte == "8") {
+            Person* actual = people.head;
+            int contadorTareas = 1;
+            while (actual != nullptr) {
+                Task* tareaActual = actual->completedTasks.head;
+                while (tareaActual != nullptr) {
+                    cout << "Tarea #" << contadorTareas << endl;
+                    cout << "Usuario: " << actual->name << endl;
+                    cout << "Tipo: " << tareaActual->type->name << endl;
+                    cout << "ID: " << tareaActual->id << endl;
+                    cout << "Importancia: " << tareaActual->importance << endl;
+                    cout << "Fecha: " << tareaActual->getDate() << endl;
+                    cout << "Hora: " << tareaActual->getTime() << endl;
+                    cout << "Descripcion: " << tareaActual->description << endl << endl;
+                    if (actual->completedTasks.getLength() == 1)
+                        break;
+                    tareaActual = tareaActual->next;
+                    contadorTareas++;
+                }
+                actual = actual->next;
+            }
+
+        }
+        else if (opcionReporte == "9") {
+            // Se salta la iteración
+        }
+        else {
+            cout << "Opcion no valida! Presione enter para volver a mostrar el menu...\n";
+            _getch();
+        }
+    }
+}
+
 void menu() {
   int option=0;
   while(true){
@@ -743,25 +1087,24 @@ void menu() {
     COORD pos = getCursorPosition(hConsole);
     cin >> option;
     switch (option) {
-      case 2:
-        system("cls");
-        queryMenu();
-        break;
-      case 4:
-        return;
-      default:
-        verifyInputType();
-        moveCursorAndDeleteLine(23, pos.Y, hConsole);
-        moveCursor(pos.X, pos.Y, hConsole);
-        break;
+        case 1: editionMenu(); break;
+        case 2:
+            system("cls");
+            queryMenu();
+            break;
+        case 3: menuReportes();break;
+        case 4: return;
+        default:
+            verifyInputType();
+            moveCursorAndDeleteLine(23, pos.Y, hConsole);
+            moveCursor(pos.X, pos.Y, hConsole);
+            break;
     }
   }
 }
 
 int main() {
   cargarDatos();
-  //showMostSpecificActiveTasksPerson();
-  menu();	
-  // testing();
+  menu();
   return 0;
 }
