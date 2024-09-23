@@ -969,7 +969,7 @@ void menuReportes() {
                 tareaActual = tareaActual->next;
                 if (tareaActual == nullptr)
                     noTareasActivas = true;
-                    break;
+                break;
             }
             if (noTareasActivas) {
                 Task* tareaActual = actual->completedTasks.head;
