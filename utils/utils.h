@@ -1,5 +1,5 @@
-#ifndef CURSOR_UTILS_H
-#define CURSOR_UTILS_H
+#ifndef UTILS_H
+#define UTILS_H
 
 #include <windows.h>
 
@@ -14,7 +14,7 @@
  *
  * @author Joseph
  */
-COORD obtenerPosicionCursor(HANDLE hConsole);
+COORD getCursorPosition(HANDLE hConsole);
 
 /**
  * @brief Mueve el cursor a una posición específica en la consola y borra la línea.
@@ -29,7 +29,17 @@ COORD obtenerPosicionCursor(HANDLE hConsole);
  *
  * @author Joseph
  */
-void moverCursorYBorrarLinea(int x, int y, HANDLE hConsole);
+void moveCursor(int x, int y,HANDLE hConsole);
 
-#include "cursor_utils.cpp"
-#endif // CURSOR_UTILS_H
+void deleteLine(HANDLE hConsole);
+
+void moveCursorAndDeleteLine(int x, int y, HANDLE hConsole);
+
+void waitEnter();
+
+void clearInputBuffer();
+
+void verifyInputType();
+
+#include "utils.cpp"
+#endif // UTILS_H
