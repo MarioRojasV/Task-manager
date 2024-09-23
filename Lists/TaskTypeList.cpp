@@ -31,6 +31,7 @@ void TaskTypeList::insert(const string& name, const string& description) {
     if (this->head == nullptr) {
         this->head = new TaskType(1, name, description);
         this->head->next = this->head;
+        this->length = 1;
         return;
     }
 

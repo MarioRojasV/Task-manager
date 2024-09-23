@@ -121,11 +121,51 @@ template <class T>
 string List<T>::toString() const {
     string rep = "{ ";
     T* currentNode = head;
-    while (currentNode) {
+    do {
         rep += currentNode->name;
-        if (currentNode->next) rep += ", ";
+        if (currentNode->next && currentNode->next != head) rep += ", ";
         currentNode = currentNode->next;
+    } while (currentNode && currentNode != head);
+
+    if (rep.length() > 70) {
+        for (int i = 0; i < rep.length(); i++) {
+            if (rep.compare(i, 1, ",")) {
+                rep.insert(i+1, "\n");
+            }
+        }
     }
+
+    rep += " }";
+    return rep;
+}
+
+/**
+ * @brief Convierte la lista en una cadena de texto que representa sus elementos.
+ *
+ * @param fieldExtractor Funcion que determina el string que representará cada nodo de la lista
+ * @return Una cadena de texto con los nombres de los nodos en la lista.
+ * @author fabian
+ */
+template <class T>
+string List<T>::toString(const function<string(const T&)>& fieldExtractor) const {
+    if (head == nullptr) return "{ }";
+    string rep = "{ ";
+    T* currentNode = head;
+    do {
+        rep += fieldExtractor(*currentNode);
+        if (currentNode->next && currentNode->next != head) rep += ", ";
+        currentNode = currentNode->next;
+    } while (currentNode && currentNode != head);
+
+    if (rep.length() > 70) {
+        for (int i = 0; i < rep.length(); i++) {
+            if (rep.at(i) == ',' || rep.at(i) == '{') {
+                rep.insert(i+1, "\n\t");
+            }
+        }
+        rep.append("\n");
+    }
+
     rep += " }";
     return rep;
 }
@@ -153,4 +193,32 @@ void List<T>::goUp(T*& currentNode, int const maxCounter) {
         currentNode = currentNode->next;
         ++counter;
     }
+    if (currentNode == nullptr && counter <= maxCounter) throw runtime_error("Indice invalido");
+}
+
+/**
+ * @brief Filtra los elementos de la lista basándose en una condición y devuelve una nueva lista con los elementos que cumplen la condición.
+ *
+ * @tparam T Tipo de los elementos en la lista.
+ * @param condition Función que define la condición de filtrado. Recibe un objeto de tipo T y devuelve un booleano.
+ * @return List<T> Nueva lista que contiene solo los elementos que cumplen con la condición especificada.
+ * @author Fabian
+ *
+ * La función recorre la lista original y aplica la condición a cada elemento. Si el elemento cumple la condición,
+ * se crea una copia de él y se inserta en la nueva lista `filteredList`, asegurándose de que no apunte a la lista original.
+ */
+template <class T>
+List<T> List<T>::filter(const std::function<bool(const T&)>& condition) const {
+    auto filteredList = List<T>();
+    if (head == nullptr) return filteredList;
+    T* currentNode = head;
+    do {
+        if (condition(*currentNode)) {
+            T* newNode = new T(*currentNode);
+            newNode->next = nullptr;
+            filteredList.insertLast(newNode);
+        }
+        currentNode = currentNode->next;
+    } while (currentNode && currentNode != head);
+    return filteredList;
 }

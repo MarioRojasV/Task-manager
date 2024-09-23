@@ -6,6 +6,8 @@
 #define LIST_H
 
 #include <string>
+#include <functional>
+
 using namespace std;
 
 template <class T>
@@ -24,7 +26,10 @@ public:
     T* removeById(int id);
 
     [[nodiscard]] string toString() const;
+    [[nodiscard]] string toString(const function<string(const T&)>& fieldExtractor) const;
     [[nodiscard]] int getLength() const;
+
+    [[nodiscard]] List<T> filter(const std::function<bool(const T&)>& condition) const;
 
 protected:
     int length{};
