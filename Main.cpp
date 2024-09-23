@@ -955,7 +955,7 @@ void menuReportes() {
                 _getch();
                 continue;
             }
-            else if (actual->activeTasks.head == nullptr || actual->completedTasks.head == nullptr) {
+            else if (actual->activeTasks.head == nullptr && actual->completedTasks.head == nullptr) {
                 cout << "El usuario ingresado no tiene tareas! Presiones enter para continuar...\n";
                 _getch();
                 continue;
@@ -969,7 +969,7 @@ void menuReportes() {
                 actual = actual->next;
                 if (actual == nullptr)
                     noTareasActivas = true;
-                    break;
+                break;
             }
             if (noTareasActivas) {
                 Task* tareaActual = actual->completedTasks.head;
